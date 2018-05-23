@@ -1,5 +1,4 @@
 # OrderSampleSystem-completed
-Order Sample System completed. 
 
 ### Installation
 
@@ -16,8 +15,8 @@ Order Sample System completed.
 ### Building and Running (2 ways)
 
 - Jenkins Pipelines
-	- Run Enviroment - [pipeline](https://github.com/carloselpapa10/MDEForge/blob/master/JenkinsfileRunEnv)
-	- Run Services - [pipeline](https://github.com/carloselpapa10/MDEForge/blob/master/JenkinsfileRunServ)
+	- Run Enviroment - EventuateComponentsJenkinsfile
+	- Run Services - ServicesJenkinsfile
 - Docker Compose
 ```sh
 $ mvn clean package -s settings.xml docker:build

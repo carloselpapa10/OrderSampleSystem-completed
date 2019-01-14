@@ -2,6 +2,8 @@ server:
   port: 8080
 
 spring:
+  application:
+    name: customer-service
   datasource:
     url: jdbc:mysql://${DOCKER_HOST_IP}:3306/eventuate?autoReconnect=true&useSSL=false
     username: mysqluser
@@ -25,9 +27,23 @@ eventuatelocal:
       string: ${DOCKER_HOST_IP}:2181
   cdc:
     dbUserName: root
-    dbPassword: rootpassword 
+    dbPassword: rootpassword
 
-    
+management:
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+  endpoints:
+    web:
+      exposure:
+        include: '*'
+      #path-mapping:
+      #  prometheus: /metrics
+  endpoint:
+    metrics:
+      enabled: true
+
 ---  
 spring:
   profiles: container

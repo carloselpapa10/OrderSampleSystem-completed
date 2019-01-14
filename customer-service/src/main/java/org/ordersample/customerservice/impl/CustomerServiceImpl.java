@@ -1,5 +1,6 @@
 package org.ordersample.customerservice.impl;
 
+import io.micrometer.core.instrument.MeterRegistry;
 import org.ordersample.servicemodel.common.BusinessException;
 import org.ordersample.servicemodel.customer.api.events.*;
 import org.ordersample.servicemodel.customer.api.info.*;
@@ -14,6 +15,8 @@ import static java.util.Collections.singletonList;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.Optional;
+
 import io.eventuate.tram.events.aggregates.ResultWithDomainEvents;
 
 @Component
@@ -22,11 +25,17 @@ public class CustomerServiceImpl implements CustomerService{
 
 	private static final Logger log = LoggerFactory.getLogger(CustomerServiceImpl.class);
 
-	@Autowired
-	private CustomerRepository customerRepository;
+	private final CustomerRepository customerRepository;
 	
-	@Autowired
-	private CustomerDomainEventPublisher customerAggregateEventPublisher;
+	private final CustomerDomainEventPublisher customerAggregateEventPublisher;
+
+	private Optional<MeterRegistry> meterRegistry;
+
+	public CustomerServiceImpl(CustomerRepository customerRepository, CustomerDomainEventPublisher customerAggregateEventPublisher, Optional<MeterRegistry> meterRegistry) {
+		this.customerRepository = customerRepository;
+		this.customerAggregateEventPublisher = customerAggregateEventPublisher;
+		this.meterRegistry = meterRegistry;
+	}
 
 	@Override
 	public Customer createCustomer(Customer customer) throws BusinessException{
@@ -39,6 +48,8 @@ public class CustomerServiceImpl implements CustomerService{
 		customer = customerRepository.save(customer);
 		customerAggregateEventPublisher.publish(customer, customerAndEvents.events);
 
+		meterRegistry.ifPresent(mr -> mr.counter("created_customers").increment());
+
 		return customer;
 	}
 				
@@ -46,7 +57,7 @@ public class CustomerServiceImpl implements CustomerService{
 	public Customer findCustomer(String id) throws BusinessException{
 		// TODO Auto-generated method stub
 		log.info("findCustomer(String id) - CustomerServiceImpl - CustomerService");
-		return customerRepository.findOne(id);
+		return customerRepository.existsById(id) ? customerRepository.findById(id).get() : null ;
 	}
 			
 	@Override
@@ -59,6 +70,8 @@ public class CustomerServiceImpl implements CustomerService{
 		
 		customer = customerRepository.save(customer);
 		customerAggregateEventPublisher.publish(customer, customerAndEvents.events);
+
+		meterRegistry.ifPresent(mr -> mr.counter("updated_customers").increment());
 	}
 			
 	@Override
@@ -71,7 +84,8 @@ public class CustomerServiceImpl implements CustomerService{
 		
 		customerRepository.delete(customer);
 		customerAggregateEventPublisher.publish(customer, customerAndEvents.events);
-		
+
+		meterRegistry.ifPresent(mr -> mr.counter("deleted_customers").increment());
 	}
 			
 	@Override
